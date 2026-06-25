@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Simulador de estudio – Psicología Clínica</title>
+<style>
+  :root {
+    --bg: #f5f1e8;
+    --paper: #fffdf9;
+    --paper-2: #faf6ee;
+    --ink: #243142;
+    --muted: #66707a;
+    --line: #d8d1c3;
+    --accent: #2f4f6f;
+    --accent-2: #496a86;
+    --good-bg: #edf6ee;
+    --good-bd: #98b89e;
+    --good-tx: #30533a;
+    --bad-bg: #fbefee;
+    --bad-bd: #d7a4a0;
+    --bad-tx: #7b3834;
+    --shadow: 0 12px 35px rgba(53, 52, 46, .08);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.35), rgba(255,255,255,.35)),
+      radial-gradient(circle at top left, rgba(47,79,111,.08), transparent 26%),
+      var(--bg);
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.5;
+  }
+  .page { max-width: 1240px; margin: 0 auto; padding: 18px; }
+  .hero {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    box-shadow: var(--shadow);
+    padding: 24px 24px 18px;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent 0, transparent 84%, rgba(47,79,111,.035) 84%, rgba(47,79,111,.035) 100%);
+    pointer-events: none;
+  }
+  .eyebrow {
+    font-size: .88rem; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--accent); font-weight: 700; margin-bottom: 8px;
+  }
+  h1 {
+    margin: 0 0 8px; font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(1.8rem, 3vw, 2.8rem); line-height: 1.12; color: #1f2a36;
+  }
+  .hero p { margin: 0; max-width: 980px; color: var(--muted); font-size: 1rem; }
+  .topic-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .chip {
+    background: #f2ede3; border: 1px solid var(--line); color: #455363;
+    border-radius: 999px; padding: 7px 12px; font-size: .9rem;
+  }
+  .layout {
+    display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 18px; align-items: start;
+  }
+  .card {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow);
+  }
+  .sidebar { padding: 18px; position: sticky; top: 18px; }
+  .main { padding: 22px; min-height: 640px; }
+  .section-title {
+    font-family: Georgia, "Times New Roman", serif; font-size: 1.08rem; margin: 0 0 12px; color: #27384b;
+  }
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+  .stat { background: var(--paper-2); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+  .stat .label { font-size: .86rem; color: var(--muted); margin-bottom: 6px; }
+  .stat .value { font-size: 1.35rem; font-weight: 700; }
+  .stat .value.small { font-size: 1rem; line-height: 1.3; }
+  .progress-wrap { margin: 14px 0 18px; }
+  .progress-meta {
+    display: flex; justify-content: space-between; gap: 10px; font-size: .92rem; color: var(--muted); margin-bottom: 8px;
+  }
+  .progress {
+    height: 12px; border-radius: 999px; background: #ece4d6; overflow: hidden; border: 1px solid var(--line);
+  }
+  .progress > div {
+    height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .25s ease;
+  }
+  .block { margin-bottom: 16px; }
+  label { display: block; font-size: .95rem; color: #415061; margin-bottom: 8px; }
+  select {
+    width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: #fff; color: var(--ink); font: inherit;
+  }
+  .toggle {
+    display: flex; gap: 10px; align-items: center; background: var(--paper-2); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 14px; margin-bottom: 10px;
+  }
+  .toggle input { width: 17px; height: 17px; accent-color: var(--accent); flex: 0 0 auto; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; }
+  button {
+    appearance: none; border: 1px solid var(--line); background: #fff; color: var(--ink);
+    border-radius: 12px; padding: 12px 15px; font: inherit; cursor: pointer;
+    transition: transform .12s ease, background .12s ease, border-color .12s ease;
+  }
+  button:hover:not(:disabled) { transform: translateY(-1px); background: #fcfbf7; }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  .primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .primary:hover:not(:disabled) { background: #274561; }
+  .save-note {
+    margin-top: 12px; padding: 12px 14px; border-radius: 12px; border: 1px dashed #cbbda5;
+    background: #fbf7ee; color: #6c6253; font-size: .92rem;
+  }
+  .question-meta {
+    display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; margin-bottom: 12px;
+  }
+  .question-number { color: var(--muted); font-size: .92rem; margin-bottom: 6px; }
+  .question-title {
+    margin: 0; font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(1.15rem, 2vw, 1.45rem); line-height: 1.4; color: #243142;
+  }
+  .badge {
+    white-space: nowrap; background: #eef3f7; border: 1px solid #cbd7e0; color: #3b556f;
+    border-radius: 999px; padding: 8px 12px; font-size: .9rem;
+  }
+  .options { display: grid; gap: 12px; margin-top: 18px; }
+  .option {
+    width: 100%; text-align: left; padding: 16px; border-radius: 14px; border: 1px solid var(--line); background: #fff; line-height: 1.5;
+  }
+  .option:hover { border-color: #b7c4d0; background: #fdfcf9; }
+  .option.correct { background: var(--good-bg); border-color: var(--good-bd); color: var(--good-tx); }
+  .option.incorrect { background: var(--bad-bg); border-color: var(--bad-bd); color: var(--bad-tx); }
+  .option.selected-neutral { border-color: #9eb0c1; background: #f5f8fb; }
+  .feedback {
+    margin-top: 18px; border-radius: 14px; border: 1px solid var(--line); padding: 16px; display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.ok { background: var(--good-bg); border-color: var(--good-bd); }
+  .feedback.bad { background: var(--bad-bg); border-color: var(--bad-bd); }
+  .feedback strong { display: block; margin-bottom: 8px; }
+  .footer-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+  .mini { color: var(--muted); font-size: .92rem; }
+  .results {
+    display: none; background: #f9f6ef; border: 1px solid var(--line); border-radius: 18px; padding: 18px;
+  }
+  .results.show { display: block; }
+  .results h2 { margin-top: 0; font-family: Georgia, "Times New Roman", serif; }
+  .results ul, .results ol { padding-left: 1.25rem; }
+  .result-box {
+    background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-top: 12px;
+  }
+  .review-item { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #e7e0d3; }
+  .review-item:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+  .resume-banner {
+    margin-top: 14px; display: none; padding: 12px 14px; border-radius: 12px;
+    background: #eef5fb; border: 1px solid #cbd8e6; color: #3f5a72; font-size: .95rem;
+  }
+  .resume-banner.show { display: block; }
+
+  @media (max-width: 980px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; order: 2; }
+    .main { order: 1; }
+  }
+  @media (max-width: 680px) {
+    .page { padding: 12px; }
+    .hero { padding: 18px; border-radius: 18px; }
+    .sidebar, .main { padding: 16px; }
+    .question-meta { flex-direction: column; align-items: flex-start; }
+    .footer-actions > button, .row > button { flex: 1 1 100%; }
+    .badge { white-space: normal; }
+  }
+  @media (max-width: 460px) {
+    .stats { grid-template-columns: 1fr; }
+    .option { padding: 14px; }
+  }
+
+  .site-footer {
+    margin: 22px auto 8px;
+    max-width: 1240px;
+    padding: 16px 18px 26px;
+    text-align: center;
+    color: #6c6253;
+    font-size: .92rem;
+    letter-spacing: .02em;
+  }
+
+
+  /* =========================
+   MODO OSCURO
+========================= */
+
+/* =========================
+   MODO OSCURO ACCESIBLE
+========================= */
+
+body.dark-mode {
+  --bg: #16181c;
+  --paper: #22262b;
+  --paper-2: #2c3137;
+
+  --ink: #f5f7fa;
+  --muted: #c3cad3;
+
+  --line: #49515a;
+
+  --accent: #7fb4ff;
+  --accent-2: #5f9df0;
+
+  --good-bg: #183323;
+  --good-bd: #2f7a4f;
+  --good-tx: #d8ffe6;
+
+  --bad-bg: #3b2226;
+  --bad-bd: #b35b65;
+  --bad-tx: #ffe2e5;
+
+  --shadow: 0 10px 30px rgba(0,0,0,.45);
+}
+
+/* Todo el texto principal */
+body.dark-mode,
+body.dark-mode p,
+body.dark-mode span,
+body.dark-mode div,
+body.dark-mode label {
+  color: var(--ink);
+}
+
+/* Títulos */
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode .question-title,
+body.dark-mode .section-title {
+  color: #ffffff;
+}
+
+/* Texto secundario */
+body.dark-mode .muted,
+body.dark-mode .meta,
+body.dark-mode .small {
+  color: var(--muted);
+}
+
+/* Tarjetas */
+body.dark-mode .card,
+body.dark-mode .panel,
+body.dark-mode .sidebar,
+body.dark-mode .question-card,
+body.dark-mode .results {
+  background: var(--paper);
+  border-color: var(--line);
+}
+
+/* Opciones */
+body.dark-mode .option {
+  background: var(--paper-2);
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+body.dark-mode .option:hover {
+  background: #363c44;
+}
+
+/* Respuesta seleccionada */
+body.dark-mode .option.selected {
+  background: #304f74;
+  border-color: #7fb4ff;
+  color: white;
+}
+
+/* Correcta */
+body.dark-mode .correct {
+  background: var(--good-bg);
+  border-color: var(--good-bd);
+  color: var(--good-tx);
+}
+
+/* Incorrecta */
+body.dark-mode .incorrect {
+  background: var(--bad-bg);
+  border-color: var(--bad-bd);
+  color: var(--bad-tx);
+}
+
+/* Botones */
+body.dark-mode button {
+  background: #31363d;
+  color: #f5f7fa;
+  border: 1px solid var(--line);
+}
+
+body.dark-mode button:hover {
+  background: #3a4048;
+}
+
+/* Botón principal */
+body.dark-mode button.primary {
+  background: var(--accent);
+  color: #111;
+}
+
+body.dark-mode button.primary:hover {
+  background: var(--accent-2);
+}
+
+/* Selects */
+body.dark-mode select,
+body.dark-mode input {
+  background: #2c3137;
+  color: #f5f7fa;
+  border-color: var(--line);
+}
+
+/* Chips */
+body.dark-mode .chip {
+  background: #343941;
+  color: #f5f7fa;
+}
+
+/* Estadísticas */
+body.dark-mode .stat {
+  background: #2c3137;
+  color: #f5f7fa;
+}
+
+/* Explicaciones */
+body.dark-mode .explanation {
+  color: #d8dde5;
+}
+
+/* Footer */
+body.dark-mode footer,
+body.dark-mode .site-footer {
+  color: #c7ced7;
+}
+
+body.dark-mode .chip,
+body.dark-mode .badge,
+body.dark-mode .stat,
+body.dark-mode .result-box,
+body.dark-mode .results {
+  background: var(--paper-2);
+  color: var(--ink);
+}
+
+body.dark-mode .option {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+body.dark-mode .option:hover {
+  background: var(--paper-2);
+}
+
+body.dark-mode button {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+body.dark-mode select {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+body.dark-mode .save-note {
+  background: var(--paper-2);
+  color: var(--ink);
+}
+
+</style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <div class="eyebrow">Simulador de estudio</div>
+      <h1>Psicología Clínica</h1>
+       <p>
+        Guía de estudio para el parcial de Psicología Clínica. Incluye modo práctica con retroalimentación, modo examen,
+        y <strong>guardado automático del progreso</strong> para que si cierras la página por accidente, lo
+        puedas retomar donde te quedaste. <br> <br> <strong>QUEDA PROHIBIDA TODA DISUFIÓN NO AUTORIZADA DEL PRESENTE MATERIAL . <br></strong> <strong>¡Buena suerte!</strong> <br> <br>
+        TEMAS DE ESTUDIO:
+      </p>
+      <div class="topic-chips" id="topicChips"></div>
+      <div class="resume-banner" id="resumeBanner"></div>
+    </section>
+
+    <div class="layout">
+      <aside class="card sidebar">
+        <h2 class="section-title">Datos del intento</h2>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="label">Preguntas cargadas</div>
+            <div class="value" id="statTotal">0</div>
+          </div>
+          <div class="stat">
+            <div class="label">Tema actual</div>
+            <div class="value small" id="statTema">Todos</div>
+          </div>
+          <div class="stat">
+            <div class="label">Aciertos</div>
+            <div class="value" id="statCorrect">0</div>
+          </div>
+          <div class="stat">
+            <div class="label">Errores</div>
+            <div class="value" id="statWrong">0</div>
+          </div>
+        </div>
+
+        <div class="progress-wrap">
+          <div class="progress-meta">
+            <span id="progressLabel">Pregunta 1 de 1</span>
+            <span id="progressPercent">0%</span>
+          </div>
+          <div class="progress"><div id="progressBar"></div></div>
+        </div>
+
+        <div class="block">
+          <label for="topicSelect">Tema del simulador</label>
+          <select id="topicSelect"></select>
+        </div>
+
+        <div class="block">
+          <label class="toggle"><input type="checkbox" id="studyMode" checked> Modo práctica (muestra la explicación al responder)</label>
+          <label class="toggle"><input type="checkbox" id="shuffleMode"> Mezclar preguntas al reiniciar</label>
+        </div>
+
+        <div class="row">
+          <button class="primary" id="restartBtn">Reiniciar intento</button>
+          <button id="reviewBtn">Ver resumen</button>
+        </div>
+        
+        <div class="row" style="margin-top:10px;">
+          <button id="themeBtn">🌙 Modo oscuro</button>
+        </div>
+
+        <div class="save-note">
+          <strong>Guardado automático activado.</strong><br>
+          El avance, las respuestas, el tema elegido y el modo de estudio se guardan en este navegador.
+        </div>
+      </aside>
+
+      <main class="card main">
+        <section id="quizArea">
+          <div class="question-meta">
+            <div>
+              <div class="question-number" id="questionCount">Pregunta 1</div>
+              <h2 class="question-title" id="questionText">Cargando pregunta…</h2>
+            </div>
+            <div class="badge" id="topicBadge">Tema</div>
+          </div>
+
+          <div class="options" id="options"></div>
+
+          <div class="feedback" id="feedbackBox">
+            <strong id="feedbackTitle"></strong>
+            <div id="feedbackText"></div>
+          </div>
+
+          <div class="footer-actions">
+            <button id="prevBtn">← Anterior</button>
+            <button class="primary" id="nextBtn">Siguiente →</button>
+            <button id="finishBtn">Finalizar intento</button>
+          </div>
+        </section>
+
+        <section class="results" id="resultsBox">
+          <h2>Resultado del simulador</h2>
+          <div class="result-box" id="resultsText"></div>
+          <div class="result-box" id="resultsExtra"></div>
+          <div class="footer-actions">
+            <button class="primary" id="backToQuizBtn">Volver al cuestionario</button>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+<script>
+const QUESTION_BANK = [{"tema": "Historia de la psicología clínica", "pregunta": "¿Quién es considerado el fundador del primer laboratorio de psicología experimental, antecedente clave de la psicología clínica?", "opciones": ["Sigmund Freud", "Wilhelm Wündt", "Lightner Witmer", "Daniel Lagache"], "correcta": 1, "explicacion": "Wilhelm Wündt fundó en 1879 el primer laboratorio de psicología en Leipzig, un antecedente clave para el desarrollo científico de la psicología y, posteriormente, de la psicología clínica."}, {"tema": "Historia de la psicología clínica", "pregunta": "¿Qué figura acuñó el término “Psicología Clínica”?", "opciones": ["Carl Rogers", "Daniel Lagache", "Lightner Witmer", "Aaron Beck"], "correcta": 2, "explicacion": "Lightner Witmer acuñó el término Psicología Clínica en 1907 y es una figura central en el nacimiento formal de esta disciplina."}, {"tema": "Historia de la psicología clínica", "pregunta": "¿Cuál fue una aportación central de Lightner Witmer al desarrollo de la psicología clínica?", "opciones": ["Fundó el primer hospital psiquiátrico", "Publicó el DSM-I", "Inauguró la primera clínica de psicología", "Desarrolló el psicoanálisis"], "correcta": 2, "explicacion": "En 1896, Witmer inauguró la primera clínica de psicología en la University of Pennsylvania, marcando un hito en la institucionalización de la psicología clínica."}, {"tema": "Historia de la psicología clínica", "pregunta": "Daniel Lagache es relevante en la historia de la psicología clínica porque:", "opciones": ["Creó el primer DSM", "Fue padre de la psicología clínica en Europa", "Introdujo el conductismo a América", "Diseñó el MMPI"], "correcta": 1, "explicacion": "Daniel Lagache es considerado padre de la psicología clínica en Europa por su visión clínica amplia del individuo y su sufrimiento."}, {"tema": "Historia de la psicología clínica", "pregunta": "¿Qué suceso de 1905 se considera importante para el desarrollo de la evaluación psicológica?", "opciones": ["Publicación del MMPI", "Aparición de la terapia cognitiva", "Desarrollo de la primera prueba de inteligencia de Binet y Simon", "Fundación de la APA"], "correcta": 2, "explicacion": "En 1905, Binet y Simon desarrollaron una de las primeras pruebas de inteligencia, con gran impacto en la evaluación psicológica."}, {"tema": "Historia de la psicología clínica", "pregunta": "¿Qué ocurrió en 1917 durante la Primera Guerra Mundial en relación con la psicología?", "opciones": ["Se fundó la APA", "Se crearon las pruebas Alpha y Beta para reclutas", "Se publicó el DSM-III", "Se abrió la primera clínica psicológica en México"], "correcta": 1, "explicacion": "Durante la Primera Guerra Mundial se diseñaron las pruebas Alpha y Beta para seleccionar y clasificar reclutas del ejército estadounidense."}, {"tema": "Historia de la psicología clínica", "pregunta": "¿Cuál fue la relevancia de la Conferencia Boulder de 1949?", "opciones": ["Aprobó el uso exclusivo del psicoanálisis", "Estableció la formación clínica sólo como práctica", "Propuso que la psicología se desarrollara como ciencia y profesión", "Eliminó la investigación del entrenamiento clínico"], "correcta": 2, "explicacion": "La Conferencia Boulder consolidó el modelo científico-profesional, integrando formación en investigación y práctica clínica."}, {"tema": "Historia de la psicología clínica", "pregunta": "El modelo asociado a la Conferencia Boulder es conocido principalmente como:", "opciones": ["Modelo psicodinámico", "Modelo científico-profesional", "Modelo médico tradicional", "Modelo comunitario"], "correcta": 1, "explicacion": "Boulder impulsó el modelo científico-profesional, que busca formar psicólogos capaces de investigar e intervenir clínicamente."}, {"tema": "Historia de la psicología clínica", "pregunta": "¿Qué defendía la Conferencia Vail de 1973?", "opciones": ["Que el psicólogo clínico debía enfocarse sólo en investigación", "Que la psiquiatría debía sustituir a la psicología clínica", "Un entrenamiento profesional con doctorado en psicología (PsyD/PsD)", "El abandono de la intervención clínica"], "correcta": 2, "explicacion": "La Conferencia Vail propuso un doctorado profesional orientado más a la práctica clínica aplicada que a la investigación."}, {"tema": "Historia de la psicología clínica", "pregunta": "¿Qué autor publicó en 1942 “Counseling and Psychotherapy”, ofreciendo una alternativa al psicoanálisis?", "opciones": ["Carl Rogers", "Sigmund Freud", "Aaron Beck", "Donald Meichenbaum"], "correcta": 0, "explicacion": "Carl Rogers publicó Counseling and Psychotherapy en 1942, obra clave del enfoque centrado en la persona."}, {"tema": "Historia de la psicología clínica", "pregunta": "¿Cuál de los siguientes hechos ocurrió en 1952?", "opciones": ["Se publica el DSM-I", "Se funda la APA", "Se crea el MMPI", "Se publica el DSM-IV"], "correcta": 0, "explicacion": "En 1952 apareció la primera edición del DSM, elaborada por la Asociación Estadounidense de Psiquiatría."}, {"tema": "Historia de la psicología clínica", "pregunta": "¿Qué evento de 1979 es clave para la terapia cognitiva?", "opciones": ["La publicación del DSM-III", "La publicación de Cognitive Therapy of Depression", "La creación de la prueba TAT", "La Conferencia Boulder"], "correcta": 1, "explicacion": "En 1979 Beck y colaboradores publicaron Cognitive Therapy of Depression, texto fundamental de la terapia cognitiva."}, {"tema": "Historia de la psicología clínica en México", "pregunta": "¿Cuál fue el primer hospital mental del continente?", "opciones": ["La Castañeda", "Fray Bernardino", "San Hipólito", "Hospital General de México"], "correcta": 2, "explicacion": "El Hospital San Hipólito, fundado en 1566, es señalado como el primer hospital mental del continente."}, {"tema": "Historia de la psicología clínica en México", "pregunta": "¿En qué año comenzó a enseñarse oficialmente la psicología en México?", "opciones": ["1566", "1896", "1916", "1971"], "correcta": 1, "explicacion": "La psicología comenzó a enseñarse oficialmente en México en 1896 con la apertura de la primera cátedra."}, {"tema": "Historia de la psicología clínica en México", "pregunta": "¿Quién impartió la primera cátedra oficial de psicología en México?", "opciones": ["James Mark Baldwin", "Enrique O. Aragón", "Ezequiel A. Chávez", "Emilio Ribes"], "correcta": 2, "explicacion": "Ezequiel A. Chávez impartió la primera cátedra oficial de psicología en México."}, {"tema": "Historia de la psicología clínica en México", "pregunta": "El pensamiento psicológico mexicano fue influido principalmente por:", "opciones": ["La tradición japonesa y alemana", "La ciencia francesa y norteamericana", "El conductismo ruso exclusivamente", "La psiquiatría italiana"], "correcta": 1, "explicacion": "La formación temprana de la psicología en México recibió gran influencia de la ciencia francesa y norteamericana."}, {"tema": "Historia de la psicología clínica en México", "pregunta": "¿Cuál de los siguientes elementos aparece como parte del surgimiento de la psicología en México?", "opciones": ["La obra “Elementos de Psicología” de Titchener", "El DSM-IV", "La conferencia Vail", "La terapia racional emotiva"], "correcta": 0, "explicacion": "El texto menciona Elementos de Psicología de Titchener como referencia importante en la enseñanza de la disciplina."}, {"tema": "Historia de la psicología clínica en México", "pregunta": "¿Qué papel tuvo James Mark Baldwin en el contexto mexicano?", "opciones": ["Fundó el Hospital San Hipólito", "Fue consejero en las reformas educativas del país", "Introdujo el DSM", "Dirigió la UNAM"], "correcta": 1, "explicacion": "James Mark Baldwin participó como consejero en reformas educativas relacionadas con el desarrollo del pensamiento psicológico."}, {"tema": "Historia de la psicología clínica en México", "pregunta": "El movimiento conductista en México se explica como reacción contra:", "opciones": ["La neuropsicología", "La falta de pruebas psicométricas", "Una psicología incapaz de responder a los problemas sociales y educativos de México", "El exceso de investigación aplicada"], "correcta": 2, "explicacion": "El conductismo mexicano surgió como reacción ante una psicología que no resolvía problemas sociales y educativos del país."}, {"tema": "Historia de la psicología clínica en México", "pregunta": "¿Qué hecho importante ocurrió en 1971 dentro del desarrollo de la psicología en México?", "opciones": ["Se publicó el DSM-I", "Se fundó el primer Centro de Educación Especial", "Se realizó el Primer Simposio Internacional de Modificación de Conducta", "Se inauguró San Hipólito"], "correcta": 2, "explicacion": "En 1971 se celebró el Primer Simposio Internacional de Modificación de Conducta, hito del desarrollo conductual en México."}, {"tema": "Historia de la psicología clínica en México", "pregunta": "El llamado “Grupo Xalapa” es relevante porque:", "opciones": ["Introdujo el psicoanálisis a México", "Se mudó a la UNAM en 1971 e impulsó investigaciones conductuales", "Fundó el DSM mexicano", "Fue el primer hospital psiquiátrico del país"], "correcta": 1, "explicacion": "El Grupo Xalapa se trasladó a la UNAM e impulsó investigaciones teóricas, experimentales y aplicadas en conducta."}, {"tema": "Historia de la psicología clínica en México", "pregunta": "¿Cuál de los siguientes paradigmas promovió soluciones prácticas a problemas conductuales de la sociedad mexicana?", "opciones": ["Paradigma psicoanalítico", "Paradigma fenomenológico", "Paradigma de la contingencia", "Paradigma humanista"], "correcta": 2, "explicacion": "El paradigma de la contingencia se orientó a la solución práctica de problemas conductuales y sociales."}, {"tema": "Historia de la psicología clínica en México", "pregunta": "Para el conductismo mexicano, el objeto de estudio de la psicología es:", "opciones": ["El inconsciente", "La experiencia subjetiva pura", "La conducta", "La personalidad"], "correcta": 2, "explicacion": "Desde el conductismo, el objeto de estudio es la conducta observable y susceptible de análisis científico."}, {"tema": "Historia de la psicología clínica en México", "pregunta": "La modificación de conducta representa:", "opciones": ["La parte filosófica del conductismo", "El lado aplicado de la psicología experimental", "Un sinónimo de psiquiatría comunitaria", "Un modelo exclusivo de neuropsicología"], "correcta": 1, "explicacion": "La modificación de conducta se entiende como la aplicación práctica de principios de la psicología experimental."}, {"tema": "Factores de riesgo y protección en salud mental", "pregunta": "Mariana, de 15 años, vive violencia constante en casa, tiene aislamiento social y no cuenta con adultos de confianza. ¿Qué combinación describe mejor su situación?", "opciones": ["Sólo factores protectores", "Factores de riesgo individuales sin contexto", "Factores de riesgo familiares y sociales con baja protección", "Sólo un problema escolar"], "correcta": 2, "explicacion": "La violencia familiar, el aislamiento y la falta de adultos de confianza aumentan la vulnerabilidad en salud mental y reducen la protección."}, {"tema": "Factores de riesgo y protección en salud mental", "pregunta": "Un adolescente consume tabaco desde los 13 años porque su grupo de amigos fuma y en casa nadie interviene. ¿Cuál es el factor de riesgo más claro?", "opciones": ["La memoria episódica", "La presión social y el inicio temprano de una conducta nociva", "La inteligencia verbal", "La orientación espacial"], "correcta": 1, "explicacion": "La presión del grupo y el inicio temprano del consumo son factores de riesgo importantes para adicciones y problemas de salud."}, {"tema": "Factores de riesgo y protección en salud mental", "pregunta": "Diego presenta tristeza persistente, cansancio, pérdida de interés y alteraciones del sueño. Su familia minimiza lo que siente. ¿Qué elemento del caso funciona como factor de riesgo adicional?", "opciones": ["El apoyo familiar", "La validación emocional", "La minimización familiar del malestar", "La adherencia terapéutica"], "correcta": 2, "explicacion": "La invalidación o minimización del malestar puede agravar el problema, retrasar la búsqueda de ayuda y aumentar el sufrimiento."}, {"tema": "Factores de riesgo y protección en salud mental", "pregunta": "Fernanda tiene una red de apoyo sólida, acceso a información confiable y motivación para pedir ayuda cuando se siente mal. En términos de salud mental, esto representa principalmente:", "opciones": ["Factores de riesgo estructurales", "Factores protectores", "Síntomas clínicos", "Signos neuropsicológicos"], "correcta": 1, "explicacion": "Una red de apoyo sólida, acceso a información y disposición para buscar ayuda son factores protectores claros."}, {"tema": "Factores de riesgo y protección en salud mental", "pregunta": "Un joven presenta ideas autodestructivas después de meses de bullying, aislamiento y consumo de alcohol. ¿Qué lectura preventiva es más adecuada?", "opciones": ["Se trata sólo de un problema moral", "Es un cuadro exclusivamente neurológico", "Existen múltiples factores de riesgo psicosociales que requieren intervención", "El alcohol funciona como factor protector"], "correcta": 2, "explicacion": "Bullying, aislamiento y consumo de alcohol son factores de riesgo psicosocial que exigen intervención y prevención."}, {"tema": "Factores de riesgo y protección en salud mental", "pregunta": "A una estudiante le preocupa mucho su peso, se salta comidas y usa conductas para bajar de peso rápidamente, aunque no cumple criterios de TCA. Estas conductas deben entenderse como:", "opciones": ["Hábitos saludables", "Conductas alimentarias de riesgo", "Síntomas de epilepsia", "Un factor protector comunitario"], "correcta": 1, "explicacion": "Las conductas alimentarias de riesgo son prácticas dañinas de control de peso que pueden anteceder a un trastorno alimentario."}, {"tema": "Factores de riesgo y protección en salud mental", "pregunta": "Un adolescente tiene buen vínculo con su madre, un maestro de confianza y participa en actividades deportivas con amigos prosociales. ¿Qué interpretación es la más adecuada?", "opciones": ["Tiene varios factores protectores", "Tiene sólo riesgo biológico", "Tiene una enfermedad mental establecida", "Presenta deterioro neurocognitivo"], "correcta": 0, "explicacion": "El vínculo familiar positivo, un adulto de confianza y actividades saludables con pares prosociales son factores protectores."}, {"tema": "Factores de riesgo y protección en salud mental", "pregunta": "Luis vive en un contexto de pobreza extrema, discriminación y violencia comunitaria. Desde una lectura psicosocial, estos son principalmente:", "opciones": ["Factores de riesgo contextuales", "Factores de protección individuales", "Técnicas de intervención", "Criterios diagnósticos de demencia"], "correcta": 0, "explicacion": "Pobreza, discriminación y violencia comunitaria son factores contextuales de riesgo para la salud mental."}, {"tema": "Factores de riesgo y protección en salud mental", "pregunta": "Si una escuela implementa talleres de regulación emocional, prevención de adicciones y redes de apoyo entre pares antes de que aparezcan trastornos, ¿qué tipo de acción representa mejor?", "opciones": ["Prevención primaria", "Prevención terciaria", "Rehabilitación", "Cuaternaria"], "correcta": 0, "explicacion": "La prevención primaria actúa antes de que aparezca el problema, promoviendo recursos y reduciendo riesgos."}, {"tema": "Factores de riesgo y protección en salud mental", "pregunta": "Un estudiante con síntomas depresivos recibe apoyo emocional, atención temprana y orientación profesional oportuna. ¿Cuál de los siguientes elementos es el más claramente protector?", "opciones": ["El aislamiento", "La detección y atención temprana", "La automedicación", "La negación del problema"], "correcta": 1, "explicacion": "La atención temprana y el apoyo adecuado funcionan como factores protectores y mejoran el pronóstico."}, {"tema": "Psicología comunitaria", "pregunta": "¿En qué año y lugar surge formalmente el concepto de psicología comunitaria en el contexto anglosajón?", "opciones": ["París, 1905", "Boston/Swampscott, 1965", "México, 1971", "Leipzig, 1879"], "correcta": 1, "explicacion": "En el ámbito anglosajón se ubica el surgimiento formal de la psicología comunitaria en Swampscott, 1965."}, {"tema": "Psicología comunitaria", "pregunta": "En América Latina, la psicología comunitaria se vinculó desde temprano con:", "opciones": ["La farmacología y neurocirugía", "La desigualdad social, pobreza y cambio social", "La evaluación transoperatoria", "La psicometría militar"], "correcta": 1, "explicacion": "En América Latina, la psicología comunitaria se articuló con problemas de desigualdad, pobreza, subdesarrollo y transformación social."}, {"tema": "Psicología comunitaria", "pregunta": "La psicología comunitaria se diferencia de la psicología clínica tradicional porque enfatiza:", "opciones": ["El tratamiento farmacológico individual", "Los objetivos comunitarios, preventivos y educativos", "Sólo el diagnóstico intrapsíquico", "La evaluación neuroquirúrgica"], "correcta": 1, "explicacion": "La psicología comunitaria enfatiza prevención, educación, participación y transformación del contexto."}, {"tema": "Psicología comunitaria", "pregunta": "¿Cuál de las siguientes opciones define mejor “comunidad”?", "opciones": ["Grupo de personas que comparten elementos en común", "Cualquier conjunto de pacientes con el mismo diagnóstico", "Sólo una colonia urbana", "Una institución psiquiátrica"], "correcta": 0, "explicacion": "La comunidad se entiende como un grupo de personas que comparten valores, costumbres, ubicación, roles u otros elementos comunes."}, {"tema": "Psicología comunitaria", "pregunta": "El modelo psicosocial comunitario surge como alternativa a la psicología clínica para atender problemas con fuerte componente socioambiental como:", "opciones": ["Fracturas óseas y miopía", "Drogadicción, marginación y delincuencia", "Hemorragias cerebrales", "Epilepsia y tumores cerebrales exclusivamente"], "correcta": 1, "explicacion": "El modelo psicosocial comunitario aborda problemas sociales como drogadicción, marginación y delincuencia desde una mirada contextual."}, {"tema": "Psicología comunitaria", "pregunta": "¿Qué busca la psicología comunitaria además de cambiar a la persona?", "opciones": ["Cambiar el ambiente insano", "Sustituir la medicina", "Eliminar la investigación", "Evitar la participación social"], "correcta": 0, "explicacion": "No sólo se busca la adaptación individual, sino también transformar el ambiente insano que sostiene el problema."}, {"tema": "Psicología comunitaria", "pregunta": "¿Cuál es uno de los supuestos básicos del enfoque comunitario?", "opciones": ["Desprofesionalizante", "Puramente hospitalario", "Individualista", "Anti-preventivo"], "correcta": 0, "explicacion": "El enfoque comunitario tiene un carácter desprofesionalizante: promueve que la comunidad adquiera mayor control sobre su salud y organización."}, {"tema": "Psicología comunitaria", "pregunta": "La dimensión participativa en psicología comunitaria implica que:", "opciones": ["Sólo el experto decide", "La comunidad participa en planificación, organización y control de la atención", "La comunidad no debe involucrarse", "La participación no puede aprenderse"], "correcta": 1, "explicacion": "La participación comunitaria implica involucrar a la comunidad en la planeación, organización y evaluación de las acciones."}, {"tema": "Psicología comunitaria", "pregunta": "En psicología comunitaria, la prevención y promoción de la salud buscan:", "opciones": ["Esperar a que aparezca el trastorno", "Evitar conductas problemáticas e instaurar comportamientos saludables", "Diagnosticar sólo trastornos severos", "Reemplazar toda intervención clínica"], "correcta": 1, "explicacion": "Se busca prevenir problemas antes de que aparezcan y promover prácticas y condiciones saludables."}, {"tema": "Psicología comunitaria", "pregunta": "¿Cuál de los siguientes es un campo de acción de la psicología comunitaria?", "opciones": ["Sólo cirugía cerebral", "Problemas sociales, estilos de vida, necesidades y recursos", "Únicamente test de inteligencia", "Prescripción de psicofármacos"], "correcta": 1, "explicacion": "La psicología comunitaria trabaja con problemas sociales, estilos de vida, necesidades, recursos y organización comunitaria."}, {"tema": "Psicología de la salud", "pregunta": "Un paciente acude porque quiere dejar de fumar, mejorar su alimentación y empezar actividad física para reducir riesgo de enfermedad cardiovascular. ¿Qué campo es el más directamente implicado?", "opciones": ["Psicología forense", "Psicología de la salud", "Neuropsicología", "Victimología"], "correcta": 1, "explicacion": "La psicología de la salud interviene en promoción de hábitos saludables, prevención de enfermedad y mantenimiento de la salud."}, {"tema": "Psicología de la salud", "pregunta": "Una mujer con diabetes tiene dificultades para adherirse a la dieta y al tratamiento porque cree que “de todos modos nada va a cambiar”. ¿Qué variable psicológica convendría trabajar según los modelos explicativos?", "opciones": ["Autoeficacia", "Agnosia", "Praxia ideomotora", "Revictimización"], "correcta": 0, "explicacion": "La autoeficacia es la percepción de capacidad para llevar a cabo conductas de cuidado y tratamiento."}, {"tema": "Psicología de la salud", "pregunta": "Un adolescente sabe que el alcohol le hace daño, pero sigue consumiéndolo porque cree que “todos lo hacen” y no quiere quedar fuera del grupo. ¿Qué modelo ayuda mejor a comprender este caso?", "opciones": ["Teoría de la acción razonada / conducta planeada", "Modelo de Wada", "Modelo de trauma complejo", "Lobotomía funcional"], "correcta": 0, "explicacion": "La teoría de la acción razonada/conducta planeada considera actitudes, norma subjetiva e intención conductual."}, {"tema": "Psicología de la salud", "pregunta": "Un centro de salud diseña una campaña para evitar obesidad infantil antes de que aparezca la enfermedad. Enseñan a familias a cocinar mejor y a organizar rutinas de ejercicio. ¿Qué nivel de prevención es?", "opciones": ["Primaria", "Secundaria", "Terciaria", "Cuaternaria"], "correcta": 0, "explicacion": "La prevención primaria busca evitar que el problema aparezca mediante promoción y reducción de factores de riesgo."}, {"tema": "Psicología de la salud", "pregunta": "A un paciente se le realiza un tamizaje para detectar hipertensión en fases tempranas y evitar complicaciones. Esto corresponde a:", "opciones": ["Prevención primaria", "Prevención secundaria", "Prevención terciaria", "Promoción social"], "correcta": 1, "explicacion": "La prevención secundaria se centra en detección temprana y tratamiento oportuno."}, {"tema": "Psicología de la salud", "pregunta": "Un paciente con enfermedad ya diagnosticada recibe rehabilitación y apoyo para evitar complicaciones y deterioro. Esto corresponde a:", "opciones": ["Prevención secundaria", "Prevención terciaria", "Prevención cuaternaria", "Ninguna prevención"], "correcta": 1, "explicacion": "La prevención terciaria intenta disminuir complicaciones, secuelas o deterioro cuando la enfermedad ya existe."}, {"tema": "Psicología de la salud", "pregunta": "A una persona terminal se le evita someterla a procedimientos excesivos e innecesarios, y se le informa sobre su derecho a decidir. Esto es un ejemplo de:", "opciones": ["Prevención primaria", "Prevención terciaria", "Prevención cuaternaria", "Intervención forense"], "correcta": 2, "explicacion": "La prevención cuaternaria busca evitar sobremedicalización, procedimientos innecesarios y daño iatrogénico."}, {"tema": "Psicología de la salud", "pregunta": "Un paciente acude por ansiedad intensa ante revisiones médicas y busca aprender estrategias para afrontar mejor esas consultas. Este caso cae mejor en:", "opciones": ["Psicología de la salud", "Psicología experimental animal", "Psiquiatría comunitaria exclusivamente", "Neurocirugía"], "correcta": 0, "explicacion": "La psicología de la salud también aborda ansiedad asociada a procedimientos médicos y adaptación a enfermedad física."}, {"tema": "Medicina conductual", "pregunta": "Un paciente con insuficiencia renal crónica necesita adherirse a dieta, tratamiento y regulación emocional para sostener su calidad de vida. ¿Qué campo encaja mejor con este abordaje integral?", "opciones": ["Medicina conductual", "Psicología evolutiva", "Psicología del deporte", "Psicometría escolar"], "correcta": 0, "explicacion": "La medicina conductual integra variables psicológicas, conductuales y médicas para el manejo de enfermedades crónicas."}, {"tema": "Medicina conductual", "pregunta": "Una paciente con cáncer presenta ansiedad intensa por procedimientos invasivos y cambios en su imagen corporal. ¿Cuál sería una meta coherente de la medicina conductual?", "opciones": ["Ignorar el impacto emocional", "Ayudarle a adherirse al tratamiento y adaptarse psicológicamente a la enfermedad", "Limitarse a recetar psicofármacos", "Evaluar sólo inteligencia"], "correcta": 1, "explicacion": "La medicina conductual busca adherencia, afrontamiento, regulación emocional y adaptación psicológica a la enfermedad."}, {"tema": "Medicina conductual", "pregunta": "Un hombre con enfermedad crónica cree que “si no me curo por completo, no sirve de nada cuidarme”. ¿Qué aspecto conviene trabajar?", "opciones": ["La expectativa de curación total en vez del control y automanejo", "El uso de pruebas Alpha y Beta", "La lateralidad hemisférica", "El test de Wada"], "correcta": 0, "explicacion": "En enfermedad crónica suele ser más realista trabajar el control, la adherencia y el automanejo que la expectativa de curación total."}, {"tema": "Medicina conductual", "pregunta": "Una adolescente con enfermedad crónica deja de seguir la dieta porque sus amigos se burlan y ella no quiere sentirse diferente. ¿Qué factor está afectando la adherencia?", "opciones": ["Sólo memoria de trabajo", "Influencia del área social y presión del contexto", "Únicamente daño frontal", "Falta de gnosias"], "correcta": 1, "explicacion": "La presión social, el deseo de pertenencia y el contexto interpersonal pueden dificultar la adherencia al tratamiento."}, {"tema": "Medicina conductual", "pregunta": "Un paciente recién diagnosticado con enfermedad crónico-degenerativa evita hacerse estudios, posterga citas y piensa catastróficamente en el futuro. ¿En qué etapa de atención médica se ubica mejor esta situación?", "opciones": ["Prediagnóstico", "Rehabilitación", "Remisión", "Fase forense"], "correcta": 0, "explicacion": "El prediagnóstico incluye preocupación, evitación, retraso en la atención y anticipación ansiosa ante una posible enfermedad."}, {"tema": "Medicina conductual", "pregunta": "Una familia recibe la noticia de que uno de sus miembros tiene una enfermedad grave y el paciente es sostén económico del hogar. El impacto emocional aumenta por la necesidad de reajustar roles. ¿Qué idea explica mejor este caso?", "opciones": ["El diagnóstico puede generar tensión familiar y conflicto por reacomodo de roles", "El diagnóstico no afecta a la familia", "La enfermedad crónica sólo impacta al cuerpo", "La adherencia no depende del contexto"], "correcta": 0, "explicacion": "El diagnóstico de enfermedad grave puede alterar roles familiares, economía y dinámica emocional del hogar."}, {"tema": "Neuropsicología", "pregunta": "La neuropsicología estudia principalmente:", "opciones": ["Sólo la conducta criminal", "Los efectos del daño o funcionamiento anómalo del sistema nervioso sobre procesos cognitivos, emocionales y conductuales", "Exclusivamente la personalidad", "Sólo la historia de la psicología"], "correcta": 1, "explicacion": "La neuropsicología estudia la relación entre cerebro, conducta y procesos cognitivos/emocionales, especialmente ante lesión o alteración neurológica."}, {"tema": "Neuropsicología", "pregunta": "¿Cuál de las siguientes funciones forma parte de los procesos psicológicos superiores evaluados por la neuropsicología?", "opciones": ["Orientación", "Funciones ejecutivas", "Memoria", "Todas las anteriores"], "correcta": 3, "explicacion": "La neuropsicología evalúa orientación, atención, memoria, lenguaje, gnosias, praxias, funciones ejecutivas y otros procesos superiores."}];
+const STORAGE_KEY = 'simulador_psicologia_clinica_v2';
+
+const els = {
+  topicChips: document.getElementById('topicChips'),
+  resumeBanner: document.getElementById('resumeBanner'),
+  topicSelect: document.getElementById('topicSelect'),
+  studyMode: document.getElementById('studyMode'),
+  shuffleMode: document.getElementById('shuffleMode'),
+  restartBtn: document.getElementById('restartBtn'),
+  reviewBtn: document.getElementById('reviewBtn'),
+  prevBtn: document.getElementById('prevBtn'),
+  nextBtn: document.getElementById('nextBtn'),
+  finishBtn: document.getElementById('finishBtn'),
+  backToQuizBtn: document.getElementById('backToQuizBtn'),
+  questionText: document.getElementById('questionText'),
+  questionCount: document.getElementById('questionCount'),
+  topicBadge: document.getElementById('topicBadge'),
+  options: document.getElementById('options'),
+  feedbackBox: document.getElementById('feedbackBox'),
+  feedbackTitle: document.getElementById('feedbackTitle'),
+  feedbackText: document.getElementById('feedbackText'),
+  statTotal: document.getElementById('statTotal'),
+  statTema: document.getElementById('statTema'),
+  statCorrect: document.getElementById('statCorrect'),
+  statWrong: document.getElementById('statWrong'),
+  progressLabel: document.getElementById('progressLabel'),
+  progressPercent: document.getElementById('progressPercent'),
+  progressBar: document.getElementById('progressBar'),
+  quizArea: document.getElementById('quizArea'),
+  resultsBox: document.getElementById('resultsBox'),
+  resultsText: document.getElementById('resultsText'),
+  resultsExtra: document.getElementById('resultsExtra'),
+  themeBtn: document.getElementById('themeBtn'),
+};
+
+const state = {
+  filtered: [],
+  current: 0,
+  answers: [],
+  topic: '__all__',
+  finished: false
+};
+
+function uniqueTopics() {
+  return [...new Set(QUESTION_BANK.map(q => q.tema))];
+}
+
+function shuffle(arr) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function buildTopicChips() {
+  els.topicChips.innerHTML = '';
+  uniqueTopics().forEach(topic => {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.textContent = topic;
+    els.topicChips.appendChild(chip);
+  });
+}
+
+function populateTopics() {
+  els.topicSelect.innerHTML = '';
+  const all = document.createElement('option');
+  all.value = '__all__';
+  all.textContent = 'Todos los temas';
+  els.topicSelect.appendChild(all);
+
+  uniqueTopics().forEach(topic => {
+    const opt = document.createElement('option');
+    opt.value = topic;
+    opt.textContent = topic;
+    els.topicSelect.appendChild(opt);
+  });
+}
+
+function getFilteredQuestions(topic) {
+  let arr = [...QUESTION_BANK];
+  if (topic && topic !== '__all__') {
+    arr = arr.filter(q => q.tema === topic);
+  }
+  return arr;
+}
+
+function createAnswerArray(len) {
+  return Array.from({ length: len }, () => ({ selected: null, correct: null }));
+}
+
+function updateStats() {
+  const total = state.filtered.length || 1;
+  const answered = state.answers.filter(a => a.selected !== null).length;
+  const correct = state.answers.filter(a => a.correct === true).length;
+  const wrong = state.answers.filter(a => a.correct === false).length;
+  const currentNumber = Math.min(state.current + 1, total);
+  const pct = Math.round((answered / total) * 100);
+
+  els.statTotal.textContent = state.filtered.length;
+  els.statTema.textContent = state.topic === '__all__' ? 'Todos' : state.topic;
+  els.statCorrect.textContent = correct;
+  els.statWrong.textContent = wrong;
+
+  els.progressLabel.textContent = `Pregunta ${currentNumber} de ${total}`;
+  els.progressPercent.textContent = `${pct}%`;
+  els.progressBar.style.width = `${pct}%`;
+}
+
+function clearFeedback() {
+  els.feedbackBox.className = 'feedback';
+  els.feedbackTitle.textContent = '';
+  els.feedbackText.innerHTML = '';
+}
+
+function renderFeedback(ok, q) {
+  els.feedbackBox.className = 'feedback show ' + (ok ? 'ok' : 'bad');
+  els.feedbackTitle.textContent = ok ? 'Respuesta correcta' : 'Respuesta incorrecta';
+  els.feedbackText.innerHTML = `
+    <div><strong>Respuesta correcta:</strong> ${String.fromCharCode(65 + q.correcta)}) ${q.opciones[q.correcta]}</div>
+    <div style="margin-top:8px;"><strong>Explicación:</strong> ${q.explicacion}</div>
+  `;
+}
+
+function saveState() {
+  const payload = {
+    topic: state.topic,
+    current: state.current,
+    answers: state.answers,
+    studyMode: els.studyMode.checked,
+    shuffleMode: els.shuffleMode.checked,
+    finished: state.finished,
+    questionOrder: state.filtered.map(q => QUESTION_BANK.indexOf(q)),
+    timestamp: new Date().toISOString()
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+}
+
+function loadState() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return false;
+
+  try {
+    const saved = JSON.parse(raw);
+    if (!saved || !Array.isArray(saved.questionOrder)) return false;
+
+    state.topic = saved.topic || '__all__';
+    els.topicSelect.value = state.topic;
+    els.studyMode.checked = saved.studyMode !== false;
+    els.shuffleMode.checked = !!saved.shuffleMode;
+    state.current = Number.isInteger(saved.current) ? saved.current : 0;
+    state.finished = !!saved.finished;
+
+    state.filtered = saved.questionOrder.map(i => QUESTION_BANK[i]).filter(Boolean);
+    if (!state.filtered.length) {
+      state.filtered = getFilteredQuestions(state.topic);
+      if (els.shuffleMode.checked) state.filtered = shuffle(state.filtered);
+    }
+
+    state.answers = Array.isArray(saved.answers) && saved.answers.length === state.filtered.length
+      ? saved.answers
+      : createAnswerArray(state.filtered.length);
+
+    const answered = state.answers.filter(a => a.selected !== null).length;
+    const stamp = saved.timestamp ? new Date(saved.timestamp).toLocaleString('es-MX') : 'hace poco';
+    if (answered > 0) {
+      els.resumeBanner.classList.add('show');
+      els.resumeBanner.innerHTML = `Se encontró un intento guardado con <strong>${answered} respuestas</strong>. Último guardado: <strong>${stamp}</strong>. Puedes seguir exactamente donde te quedaste.`;
+    }
+    return true;
+  } catch (e) {
+    console.warn('No se pudo recuperar el progreso guardado:', e);
+    return false;
+  }
+}
+
+function startNewAttempt() {
+  state.topic = els.topicSelect.value;
+  let freshQuestions = getFilteredQuestions(state.topic);
+
+  // Si el usuario activó "Mezclar preguntas al reiniciar", generamos un nuevo orden
+  // cada vez que se crea un intento nuevo.
+  if (els.shuffleMode.checked) {
+    freshQuestions = shuffle(freshQuestions);
+  }
+
+  state.filtered = freshQuestions;
+  state.current = 0;
+  state.answers = createAnswerArray(state.filtered.length);
+  state.finished = false;
+  hideResults();
+  updateStats();
+  showQuestion();
+  saveState();
+}
+
+function applyFilterFromUI() {
+  state.topic = els.topicSelect.value;
+  startNewAttempt();
+}
+
+function showQuestion() {
+  if (!state.filtered.length) {
+    els.questionCount.textContent = 'Sin preguntas';
+    els.questionText.textContent = 'No hay preguntas disponibles para este filtro.';
+    els.topicBadge.textContent = '—';
+    els.options.innerHTML = '';
+    clearFeedback();
+    updateStats();
+    return;
+  }
+
+  const q = state.filtered[state.current];
+  const ans = state.answers[state.current];
+
+  els.questionCount.textContent = `Pregunta ${state.current + 1}`;
+  els.questionText.textContent = q.pregunta;
+  els.topicBadge.textContent = q.tema;
+  els.options.innerHTML = '';
+
+  q.opciones.forEach((op, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.innerHTML = `<strong>${String.fromCharCode(65 + idx)})</strong> ${op}`;
+
+    if (ans.selected !== null) {
+      if (els.studyMode.checked) {
+        if (idx === q.correcta) btn.classList.add('correct');
+        if (idx === ans.selected && idx !== q.correcta) btn.classList.add('incorrect');
+      } else if (idx === ans.selected) {
+        btn.classList.add('selected-neutral');
+      }
+    }
+
+    btn.addEventListener('click', () => {
+      ans.selected = idx;
+      ans.correct = idx === q.correcta;
+      saveState();
+      showQuestion();
+      if (els.studyMode.checked) renderFeedback(ans.correct, q);
+      updateStats();
+    });
+
+    els.options.appendChild(btn);
+  });
+
+  if (els.studyMode.checked && ans.selected !== null) {
+    renderFeedback(ans.correct, q);
+  } else {
+    clearFeedback();
+  }
+
+  els.prevBtn.disabled = state.current === 0;
+  els.nextBtn.disabled = state.current >= state.filtered.length - 1;
+  updateStats();
+}
+
+function showResults() {
+  const total = state.filtered.length;
+  const answered = state.answers.filter(a => a.selected !== null).length;
+  const correct = state.answers.filter(a => a.correct === true).length;
+  const wrong = state.answers.filter(a => a.correct === false).length;
+  const score = total ? Math.round((correct / total) * 100) : 0;
+
+  state.finished = true;
+  saveState();
+
+  els.resultsText.innerHTML = `
+    <strong>Puntaje:</strong> ${correct} / ${total} (${score}%)<br>
+    <strong>Respondidas:</strong> ${answered}<br>
+    <strong>Errores:</strong> ${wrong}
+  `;
+
+  const byTopic = {};
+  state.filtered.forEach((q, i) => {
+    if (!byTopic[q.tema]) byTopic[q.tema] = { total: 0, correct: 0 };
+    byTopic[q.tema].total++;
+    if (state.answers[i].correct === true) byTopic[q.tema].correct++;
+  });
+
+  let extra = '<h3 style="margin-top:0;">Desempeño por tema</h3><ul>';
+  for (const [tema, data] of Object.entries(byTopic)) {
+    const pct = Math.round((data.correct / data.total) * 100);
+    extra += `<li><strong>${tema}</strong>: ${data.correct} / ${data.total} (${pct}%)</li>`;
+  }
+  extra += '</ul>';
+
+  extra += '<h3>Revisión de respuestas</h3><div>';
+  state.filtered.forEach((q, i) => {
+    const a = state.answers[i];
+    const user = a.selected !== null ? `${String.fromCharCode(65 + a.selected)}) ${q.opciones[a.selected]}` : 'Sin responder';
+    const good = `${String.fromCharCode(65 + q.correcta)}) ${q.opciones[q.correcta]}`;
+    extra += `
+      <div class="review-item">
+        <div><strong>${i + 1}. ${q.pregunta}</strong></div>
+        <div><strong>Tu respuesta:</strong> ${user}</div>
+        <div><strong>Correcta:</strong> ${good}</div>
+        <div class="mini" style="margin-top:4px;">${q.explicacion}</div>
+      </div>
+    `;
+  });
+  extra += '</div>';
+
+  els.resultsExtra.innerHTML = extra;
+  els.quizArea.style.display = 'none';
+  els.resultsBox.classList.add('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function hideResults() {
+  els.resultsBox.classList.remove('show');
+  els.quizArea.style.display = 'block';
+}
+
+function clearSavedProgress() {
+  localStorage.removeItem(STORAGE_KEY);
+  els.resumeBanner.classList.remove('show');
+}
+
+els.topicSelect.addEventListener('change', applyFilterFromUI);
+els.shuffleMode.addEventListener('change', () => {
+  saveState();
+  // Reaplica el orden cuando el usuario reinicia, que es lo esperado por la etiqueta del botón/opción.
+});
+els.studyMode.addEventListener('change', () => {
+  saveState();
+  showQuestion();
+});
+els.restartBtn.addEventListener('click', () => {
+  if (confirm('Esto reiniciará el intento actual y borrará el progreso guardado. ¿Deseas continuar?')) {
+    clearSavedProgress();
+    // Conservamos el estado actual del checkbox "Mezclar preguntas al reiniciar"
+    // y generamos un nuevo intento aplicándolo.
+    startNewAttempt();
+  }
+});
+els.reviewBtn.addEventListener('click', showResults);
+els.finishBtn.addEventListener('click', showResults);
+els.backToQuizBtn.addEventListener('click', hideResults);
+
+els.nextBtn.addEventListener('click', () => {
+  if (state.current < state.filtered.length - 1) {
+    state.current++;
+    saveState();
+    showQuestion();
+  }
+});
+els.prevBtn.addEventListener('click', () => {
+  if (state.current > 0) {
+    state.current--;
+    saveState();
+    showQuestion();
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (els.resultsBox.classList.contains('show')) return;
+  if (e.key === 'ArrowRight' && state.current < state.filtered.length - 1) {
+    state.current++;
+    saveState();
+    showQuestion();
+  }
+  if (e.key === 'ArrowLeft' && state.current > 0) {
+    state.current--;
+    saveState();
+    showQuestion();
+  }
+});
+
+// =====================
+// TEMA CLARO / OSCURO
+// =====================
+
+function updateThemeButton() {
+  els.themeBtn.textContent =
+    document.body.classList.contains("dark-mode")
+      ? "☀️ Modo claro"
+      : "🌙 Modo oscuro";
+}
+
+function saveTheme() {
+  localStorage.setItem(
+    "theme",
+    document.body.classList.contains("dark-mode")
+      ? "dark"
+      : "light"
+  );
+}
+
+function loadTheme() {
+  const saved = localStorage.getItem("theme");
+
+  if (saved === "dark") {
+    document.body.classList.add("dark-mode");
+  }
+
+  updateThemeButton();
+}
+
+els.themeBtn.addEventListener("click", () => {
+  document.body.classList.toggle("dark-mode");
+  saveTheme();
+  updateThemeButton();
+});
+
+loadTheme();
+
+populateTopics();
+buildTopicChips();
+
+const restored = loadState();
+if (!restored) {
+  els.topicSelect.value = '__all__';
+  startNewAttempt();
+} else {
+  hideResults();
+  if (state.finished) {
+    showResults();
+  } else {
+    showQuestion();
+  }
+}
+</script>
+
+  <footer class="site-footer">
+    © <span id="footerYear"></span> A. A. DURAND. Todos los derechos reservados.
+  </footer>
+
+<script>
+
+const footerYear = document.getElementById('footerYear');
+if (footerYear) footerYear.textContent = new Date().getFullYear();
+
+</script>
+</body>
+</html>
